@@ -15,7 +15,18 @@ if(WIN32)
 endif()
 
 if(APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" )
+    set(PDFIUM_APPLE_SYSROOT "${CMAKE_OSX_SYSROOT}")
+    if(NOT PDFIUM_APPLE_SYSROOT)
+        execute_process(
+            COMMAND xcrun --show-sdk-path
+            OUTPUT_VARIABLE PDFIUM_APPLE_SYSROOT
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+    endif()
+    if(PDFIUM_APPLE_SYSROOT)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -isysroot ${PDFIUM_APPLE_SYSROOT}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot ${PDFIUM_APPLE_SYSROOT}")
+    endif()
 endif()
 
 add_definitions(-DCMS_NO_REGISTER_KEYWORD -DUNICODE -D_UNICODE -DUSE_LIBJPEG_TURBO -DPNG_PREFIX -DUSE_SYSTEM_ICUUC -DUSE_SYSTEM_LIBJPEG -DUSE_SYSTEM_LCMS2 -DUSE_SYSTEM_ZLIB -DUSE_SYSTEM_LIBOPENJPEG2 -DOPJ_STATIC -DDEFINE_PS_TABLES)
