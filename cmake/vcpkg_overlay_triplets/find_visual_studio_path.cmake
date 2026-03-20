@@ -3,6 +3,11 @@ function(find_visual_studio_path)
         "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise"
         "C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional"
         "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community"
+        "C:\\Program Files\\Microsoft Visual Studio\\2022\\BuildTools"
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\Enterprise"
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\Professional"
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\Community"
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools"
     )
 
     set(VISUAL_STUDIO_FOUND FALSE)

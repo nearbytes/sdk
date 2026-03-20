@@ -57,6 +57,18 @@ file(REMOVE_RECURSE "${SOURCE_PATH}/source/data")
 file(COPY "${SOURCE_PATH}.temp/" DESTINATION "${SOURCE_PATH}/source/")
 file(REMOVE_RECURSE "${SOURCE_PATH}.temp")
 
+if(VCPKG_TARGET_IS_WINDOWS)
+    vcpkg_replace_string("${SOURCE_PATH}/source/config/mh-msys-msvc" "CXXFLAGS+=-GF -nologo -EHsc -Zc:wchar_t -utf-8" "CXXFLAGS+=-GF -nologo -EHsc -Zc:wchar_t -utf-8 -std:c++17")
+    vcpkg_replace_string("${SOURCE_PATH}/source/config/mh-msys-msvc" "AR = LIB.EXE#M#\nARFLAGS := -nologo $(ARFLAGS:r=)#M#\n" "")
+
+    set(ICU_MSVC_ARFLAGS "-machine:${VCPKG_TARGET_ARCHITECTURE} -nologo")
+    vcpkg_replace_string(
+        "${SOURCE_PATH}/source/config/Makefile.inc.in"
+        "\tARFLAGS := @ARFLAGS@ $(ARFLAGS)"
+        "\tARFLAGS := ${ICU_MSVC_ARFLAGS} $(ARFLAGS)"
+    )
+endif()
+
 vcpkg_find_acquire_program(PYTHON3)
 set(ENV{PYTHON} "${PYTHON3}")
 
@@ -101,12 +113,19 @@ file(COPY ${CURRENT_PORT_DIR}/filter.json DESTINATION ${SOURCE_PATH}/)
 
 set(ENV{ICU_DATA_FILTER_FILE} "${SOURCE_PATH}/filter.json")
 
+if(VCPKG_TARGET_IS_WINDOWS)
+    set(ICU_CONFIGURE_WRAPPER_OPTION NO_WRAPPERS)
+    set(ENV{AR} "lib.exe")
+    set(ENV{ARFLAGS} "${ICU_MSVC_ARFLAGS}")
+endif()
+
 vcpkg_configure_make(
     SOURCE_PATH "${SOURCE_PATH}"
     PROJECT_SUBPATH source
     AUTOCONFIG
     DETERMINE_BUILD_TRIPLET
     ADDITIONAL_MSYS_PACKAGES autoconf-archive
+    ${ICU_CONFIGURE_WRAPPER_OPTION}
     OPTIONS
         ${CONFIGURE_OPTIONS}
         --disable-samples
@@ -119,6 +138,25 @@ vcpkg_configure_make(
         --enable-debug
         --disable-release
 )
+
+if(VCPKG_TARGET_IS_WINDOWS)
+    foreach(ICU_BUILD_TYPE dbg rel)
+        set(ICU_GENERATED_MAKEFILE_INC "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-${ICU_BUILD_TYPE}/config/Makefile.inc")
+        if(EXISTS "${ICU_GENERATED_MAKEFILE_INC}")
+            vcpkg_replace_string(
+                "${ICU_GENERATED_MAKEFILE_INC}"
+                "\tARFLAGS := cr ${ICU_MSVC_ARFLAGS} $(ARFLAGS)"
+                "\tARFLAGS := ${ICU_MSVC_ARFLAGS} $(ARFLAGS)"
+            )
+            vcpkg_replace_string(
+                "${ICU_GENERATED_MAKEFILE_INC}"
+                "#SH#ARFLAGS=\"cr ${ICU_MSVC_ARFLAGS} ${ARFLAGS}\""
+                "#SH#ARFLAGS=\"${ICU_MSVC_ARFLAGS} ${ARFLAGS}\""
+            )
+        endif()
+    endforeach()
+endif()
+
 vcpkg_install_make(OPTIONS ${BUILD_OPTIONS})
 
 file(REMOVE_RECURSE
