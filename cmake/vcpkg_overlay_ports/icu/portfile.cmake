@@ -59,14 +59,16 @@ file(REMOVE_RECURSE "${SOURCE_PATH}.temp")
 
 if(VCPKG_TARGET_IS_WINDOWS)
     vcpkg_replace_string("${SOURCE_PATH}/source/config/mh-msys-msvc" "CXXFLAGS+=-GF -nologo -EHsc -Zc:wchar_t -utf-8" "CXXFLAGS+=-GF -nologo -EHsc -Zc:wchar_t -utf-8 -std:c++17")
-    vcpkg_replace_string("${SOURCE_PATH}/source/config/mh-msys-msvc" "AR = LIB.EXE#M#\nARFLAGS := -nologo $(ARFLAGS:r=)#M#\n" "")
-
     set(ICU_MSVC_ARFLAGS "-machine:${VCPKG_TARGET_ARCHITECTURE} -nologo")
     vcpkg_replace_string(
-        "${SOURCE_PATH}/source/config/Makefile.inc.in"
-        "\tARFLAGS := @ARFLAGS@ $(ARFLAGS)"
-        "\tARFLAGS := ${ICU_MSVC_ARFLAGS} $(ARFLAGS)"
+        "${SOURCE_PATH}/source/config/mh-msys-msvc"
+        "AR = LIB.EXE#M#\nARFLAGS := -nologo $(ARFLAGS:r=)#M#\n"
+        "AR = LIB.EXE#M#\nARFLAGS := ${ICU_MSVC_ARFLAGS}#M#\n"
     )
+
+    file(READ "${SOURCE_PATH}/source/config/Makefile.inc.in" ICU_MAKEFILE_INC_IN)
+    string(REGEX REPLACE "\tARFLAGS := [^\n]*" "\tARFLAGS := ${ICU_MSVC_ARFLAGS}" ICU_MAKEFILE_INC_IN "${ICU_MAKEFILE_INC_IN}")
+    file(WRITE "${SOURCE_PATH}/source/config/Makefile.inc.in" "${ICU_MAKEFILE_INC_IN}")
 endif()
 
 vcpkg_find_acquire_program(PYTHON3)
@@ -116,7 +118,7 @@ set(ENV{ICU_DATA_FILTER_FILE} "${SOURCE_PATH}/filter.json")
 if(VCPKG_TARGET_IS_WINDOWS)
     set(ICU_CONFIGURE_WRAPPER_OPTION NO_WRAPPERS)
     set(ENV{AR} "lib.exe")
-    set(ENV{ARFLAGS} "${ICU_MSVC_ARFLAGS}")
+    set(ENV{ARFLAGS} "")
 endif()
 
 vcpkg_configure_make(
@@ -143,16 +145,10 @@ if(VCPKG_TARGET_IS_WINDOWS)
     foreach(ICU_BUILD_TYPE dbg rel)
         set(ICU_GENERATED_MAKEFILE_INC "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-${ICU_BUILD_TYPE}/config/Makefile.inc")
         if(EXISTS "${ICU_GENERATED_MAKEFILE_INC}")
-            vcpkg_replace_string(
-                "${ICU_GENERATED_MAKEFILE_INC}"
-                "\tARFLAGS := cr ${ICU_MSVC_ARFLAGS} $(ARFLAGS)"
-                "\tARFLAGS := ${ICU_MSVC_ARFLAGS} $(ARFLAGS)"
-            )
-            vcpkg_replace_string(
-                "${ICU_GENERATED_MAKEFILE_INC}"
-                "#SH#ARFLAGS=\"cr ${ICU_MSVC_ARFLAGS} ${ARFLAGS}\""
-                "#SH#ARFLAGS=\"${ICU_MSVC_ARFLAGS} ${ARFLAGS}\""
-            )
+            file(READ "${ICU_GENERATED_MAKEFILE_INC}" ICU_GENERATED_CONTENT)
+            string(REGEX REPLACE "\tARFLAGS := cr[^\n]*" "\tARFLAGS := ${ICU_MSVC_ARFLAGS}" ICU_GENERATED_CONTENT "${ICU_GENERATED_CONTENT}")
+            string(REGEX REPLACE "#SH#ARFLAGS=\"cr[^\"]*\"" "#SH#ARFLAGS=\"${ICU_MSVC_ARFLAGS}\"" ICU_GENERATED_CONTENT "${ICU_GENERATED_CONTENT}")
+            file(WRITE "${ICU_GENERATED_MAKEFILE_INC}" "${ICU_GENERATED_CONTENT}")
         endif()
     endforeach()
 endif()
