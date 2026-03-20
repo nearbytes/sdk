@@ -17655,7 +17655,8 @@ error MegaClient::addtimer(TimerWithBackoff *twb)
 #ifdef ENABLE_SYNC
 
 std::pair<error, SyncError> MegaClient::isnodesyncable(std::shared_ptr<Node> remotenode,
-                                                       const bool excludeSelf)
+                                                       const bool excludeSelf,
+                                                       const SyncConfig::Type syncType)
 {
     if (!remotenode)
     {
@@ -17674,7 +17675,7 @@ std::pair<error, SyncError> MegaClient::isnodesyncable(std::shared_ptr<Node> rem
         syncError != NO_SYNC_ERROR)
         return {API_EEXIST, syncError};
 
-    if (userHasRestrictedAccessToNode(*remotenode))
+    if (userHasRestrictedAccessToNode(*remotenode) && syncType != SyncConfig::TYPE_DOWN)
         return {API_EACCESS, SHARE_NON_FULL_ACCESS};
 
     return {API_OK, NO_SYNC_ERROR};
@@ -17891,7 +17892,7 @@ SyncErrorInfo MegaClient::checkSyncConfig(const SyncConfig& syncConfig)
         return {API_ENOENT, REMOTE_NODE_NOT_FOUND, NO_SYNC_WARNING};
     }
 
-    if (const auto [e, syncError] = isnodesyncable(remotenode); e)
+    if (const auto [e, syncError] = isnodesyncable(remotenode, false, syncConfig.getType()); e)
     {
         LOG_debug << "Node is not syncable for sync add";
         return {e, syncError, NO_SYNC_WARNING};
@@ -18003,7 +18004,14 @@ void MegaClient::changeSyncRoot(const handle backupId,
         return completion(API_EARGS, REMOTE_NODE_NOT_FOUND);
     }
 
-    if (const auto [err, syncErr] = isnodesyncable(newRootNode); err != API_OK)
+    SyncConfig currentConfig;
+    if (!syncs.syncConfigByBackupId(backupId, currentConfig))
+    {
+        LOG_err << "changeSyncRoot: Invalid backup id";
+        return completion(API_ENOENT, NO_SYNC_ERROR);
+    }
+
+    if (const auto [err, syncErr] = isnodesyncable(newRootNode, false, currentConfig.getType()); err != API_OK)
     {
         LOG_err << "changeSyncRoot: Given new root node is not syncable. Error: "
                 << SyncConfig::syncErrorToStr(syncErr);

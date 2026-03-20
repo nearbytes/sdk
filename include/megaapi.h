@@ -7999,6 +7999,7 @@ public:
     enum SyncType
     {
         TYPE_UNKNOWN = 0,
+        TYPE_DOWN = 2, // One-way sync from remote to local
         TYPE_TWOWAY = 3, // Two-way sync
         TYPE_BACKUP, // special sync up from local to remote, automatically disabled when remote changed
     };
@@ -17947,7 +17948,7 @@ class MegaApi
          * This function should be used to add a new synchronization/backup task for the MegaApi.
          * To resume a previously configured task folder, use MegaApi::enableSync.
          *
-         * Both TYPE_TWOWAY and TYPE_BACKUP are supported for the first parameter.
+         * TYPE_DOWN, TYPE_TWOWAY and TYPE_BACKUP are supported for the first parameter.
          *
          * The sync/backup's name is optional. If not provided, it will take the name of the leaf
          * folder of the local path. In example, for "/home/user/Documents", it will become
@@ -17995,7 +17996,7 @@ class MegaApi
          * value as MegaRequest::getNumDetails() See MegaApi::isNodeSyncableWithError() for specific
          * SyncError codes depending on the specific MegaError code.
          *
-         * @param syncType Type of sync. Currently supported: TYPE_TWOWAY and TYPE_BACKUP.
+         * @param syncType Type of sync. Currently supported: TYPE_DOWN, TYPE_TWOWAY and TYPE_BACKUP.
          * @param localSyncRootFolder Path of the Local folder to sync/backup.
          * @param name Name given to the sync. You can pass NULL, and the folder name will be used
          * instead.
@@ -18378,7 +18379,7 @@ class MegaApi
          * suspended to perform the change, meaning that any ongoing transfer will be automatically
          * stopped.
          *
-         * @note This operation is only allowed with syncs of TYPE_TWOWAY.
+         * @note This operation is only allowed with syncs of TYPE_DOWN or TYPE_TWOWAY.
          *
          * The associated request type with this request is MegaRequest::TYPE_CHANGE_SYNC_ROOT
          * Valid data in the MegaRequest object received on callbacks:

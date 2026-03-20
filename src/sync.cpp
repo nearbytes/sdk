@@ -4598,7 +4598,8 @@ void Syncs::manageRemoteRootLocationChange(Sync& sync) const
         {
             std::lock_guard g(mClient.nodeTreeMutex);
             return mClient.isnodesyncable(mClient.mNodeManager.getNodeByHandle(config.mRemoteNode),
-                                          true);
+                                          true,
+                                          config.getType());
         });
     if (e)
     {

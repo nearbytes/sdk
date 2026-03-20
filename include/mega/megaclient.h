@@ -1099,7 +1099,8 @@ public:
      * the node is syncable.
      */
     std::pair<error, SyncError> isnodesyncable(std::shared_ptr<Node> remotenode,
-                                               const bool excludeSelf = false);
+                                               const bool excludeSelf = false,
+                                               const SyncConfig::Type syncType = SyncConfig::TYPE_TWOWAY);
 
     /**
      * @brief Checks if the given remotenode is related with any active sync

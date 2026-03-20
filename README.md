@@ -1,4 +1,6 @@
 # MEGA SDK - Client Access Engine
+Fork note: this repository is also used as the public Nearbytes SDK fork. For the small Nearbytes-specific delta from upstream, see [NEARBYTES_FORK.md](NEARBYTES_FORK.md).
+
 
 MEGA --- _The Privacy Company_ --- is a Secure Cloud Storage provider
 that protects your data thanks to end-to-end encryption. We call it User Controlled Encryption,
